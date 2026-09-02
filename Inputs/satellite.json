@@ -1,0 +1,32 @@
+{
+  "satellite": {
+    "name": "[INSERT_SAT_NAME_HERE]",
+    "id": "11111",
+    "international_designator": "[INSERT_SAT_NAME_HERE]"
+  },
+  "epoch": "2026-01-01T00:00:00",
+  "orbit": {
+    "type": "keplerian",
+    "frame": "GCRF",
+    "elements": {
+      "semi_major_axis_km": 42134.0,
+      "eccentricity": 0.001,
+      "inclination_deg": 2.0,
+      "raan_deg": 10.0,
+      "arg_of_perigee_deg": 20.0,
+      "true_anomaly_deg": 40.0
+    }
+  },
+  "physical_properties": {
+    "mass_kg": 10.0,
+    "drag_coefficient": 2.2,
+    "cross_sectional_area_m2": 1.0,
+    "srp_coefficient": 1.5,
+    "srp_area_m2": 1.0
+  },
+  "propagator": {
+    "step_size_s": 60,
+    "duration_days": 3,
+    "force_models": ["j2", "drag", "third_body_sun", "third_body_moon", "srp"]
+  }
+}
