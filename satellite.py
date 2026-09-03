@@ -14,6 +14,4 @@ class Satellite:
     cross_sectional_area_m2: float
     srp_coefficient: float
     srp_area_m2: float
-    step_size_s: float
-    duration_days: float
     force_models: tuple[str,...]
