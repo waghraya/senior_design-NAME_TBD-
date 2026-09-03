@@ -7,6 +7,7 @@ print('Virtual Machine Initialized...')
 from orekit_jpype.pyhelpers import setup_orekit_data, absolutedate_to_datetime
 setup_orekit_data()
 print('Orekit data identified...')
+from org.orekit.attitudes import Attitude, AttitudeProvider
 from org.orekit.frames import FramesFactory
 from org.orekit.utils import IERSConventions, Constants
 from org.orekit.time import AbsoluteDate, TimeScalesFactory
@@ -20,20 +21,20 @@ from org.orekit.bodies import OneAxisEllipsoid
 from org.orekit.propagation.analytical.tle import TLE, TLEPropagator
 
 from org.hipparchus.ode.nonstiff import DormandPrince853Integrator
-from org.hipparchus.geometry.euclidean.threed import Vector3D
+from org.hipparchus.geometry.euclidean.threed import Vector3D, Rotation
 
 from satellite import Satellite
 from scenario import Scenario
 from rso import RSO
 ## Setup frames and time
 # J2000 frame
-inertial_frame = FramesFactory.getEME2000()
+EME2000 = FramesFactory.getEME2000()
 gcrf = FramesFactory.getGCRF()
 earth_frame = FramesFactory.getITRF(IERSConventions.IERS_2010, True)
 utc = TimeScalesFactory.getUTC()
 
-## --------------------------------Parse input file--------------------------------
 # TODO: move parsing somewhere else
+## --------------------------------Parse input file--------------------------------
 with open('Inputs/Scenario.json', 'r', encoding='utf8') as file:
     scenario_data = json.load(file)
 
@@ -80,7 +81,7 @@ sat = Satellite(
     srp_area_m2=satellite_data['physical_properties']['srp_area_m2'],
     force_models=satellite_data['propagator']['force_models']
 )
-# TODO: parse RSO tle
+
 with open('Inputs/RSO.json', 'r', encoding='utf8') as file:
     rso_data = json.load(file)
 rso_list = []
@@ -134,8 +135,19 @@ while t < scenario.duration_days * 86400.0:
         rso_state = rso_prop.propagate(current_date)
         rso_pvs[rso.name] = rso_state.getPVCoordinates(gcrf)
 
+    # Attitude Dynamics
+    los = rso_pvs[rso_list[0].name].getPosition().subtract(satellite_pv.getPosition()).normalize()
+    desired_rotation = Rotation(Vector3D.PLUS_K, los)
+    # this is a really bad implementation that reconstructs state, need to implement controls later and propagate the input
+    new_state = SpacecraftState(satellite_state.getOrbit(),
+                                #eventually fill Vector3D.ZERO with attitude control outputs
+                                Attitude(current_date, gcrf, desired_rotation, Vector3D.ZERO, Vector3D.ZERO)
+                                )
+    propagator.resetInitialState(new_state)
+
+
     #print("Date:", absolutedate_to_datetime(state.getDate()))
-    #print("Position (m):", pv.getPosition())
-    #print("Velocity (m/s):", pv.getVelocity())
+    #print("Position (m):", satellite_pv.getPosition())
+    #print("Velocity (m/s):", satellite_pv.getVelocity())
     print(t)
     t += scenario.time_step_s
